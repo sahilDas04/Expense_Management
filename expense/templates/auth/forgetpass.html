@@ -5,11 +5,10 @@
       <div class="rounded-2xl bg-white shadow-xl">
         <form
           method="post"
-          action="{% url 'login' %}"
+          action="{% url 'forgetpass' %}"
           class="lg:p-11 p-7 mx-auto"
         >
-        {% csrf_token %}
-          {% if messages %}
+          {% csrf_token %} {% if messages %}
           <div class="space-y-2 mb-6">
             {% for message in messages %} {% if message.tags == 'error' %}
             <div
@@ -35,47 +34,26 @@
             <h1
               class="text-gray-900 text-center font-manrope text-3xl font-bold leading-10 mb-2"
             >
-              Welcome Back
+              Forget Your Password
             </h1>
           </div>
           <input
-            type="text"
-            name="username"
-            id="username"
-            class="w-full h-12 text-gray-900 placeholder:text-gray-400 text-lg font-normal leading-7 rounded-full border-gray-300 border shadow-sm focus:outline-none px-4 mb-6"
-            placeholder="Username"
-          />
-          <input
-            type="password"
-            name="password"
-            id="password"
+            type="email"
+            name="email"
+            id="email"
             required
-            class="w-full h-12 text-gray-900 placeholder:text-gray-400 text-lg font-normal leading-7 rounded-full border-gray-300 border shadow-sm focus:outline-none px-4 mb-1"
-            placeholder="Password"
+            class="w-full h-12 text-gray-900 placeholder:text-gray-400 text-lg font-normal leading-7 rounded-full border border-gray-300 shadow-sm focus:outline-none px-4 mb-6"
+            placeholder="Email"
           />
-          <a href="{% url 'forgetpass' %}" class="flex justify-end mb-6">
-            <span
-              class="text-indigo-600 text-right text-base font-normal leading-6"
-              >Forgot Password?</span
-            >
-          </a>
           <button
             type="submit"
             class="w-full h-12 text-white text-center text-base font-semibold leading-6 rounded-full hover:bg-indigo-800 transition-all duration-700 bg-indigo-600 shadow-sm mb-11"
           >
-            Login
+            Send Email
           </button>
-          <a
-            href="{% url 'register' %}"
-            class="flex justify-center text-gray-900 text-base font-medium leading-6"
-          >
-            Don’t have an account?
-            <span class="text-indigo-600 font-semibold pl-3"> Sign Up</span>
-          </a>
         </form>
       </div>
     </div>
   </section>
 </body>
-
 {% endblock %}
