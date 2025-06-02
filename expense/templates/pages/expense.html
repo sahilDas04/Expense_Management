@@ -1,0 +1,85 @@
+{% extends "base.html" %} {% block content %}
+<div
+  class="flex flex-col md:flex-row justify-center items-start space-y-6 md:space-y-0 md:space-x-6 p-6"
+>
+  <form method="POST" class="bg-white p-6 rounded-lg shadow-md max-w-md w-full">
+    {% csrf_token %}
+    <h2 class="text-xl font-semibold text-gray-800 mb-4">Set Monthly Income</h2>
+
+    <label for="monthlyIncome" class="block text-gray-700 mb-1"
+      >Monthly Income:</label
+    >
+    <input
+      type="number"
+      id="monthlyIncome"
+      name="monthlyIncome"
+      class="w-full border border-green-500 rounded-lg p-2 mb-6"
+      placeholder="Enter your monthly income"
+      required
+    />
+
+    <button
+      type="submit"
+      class="bg-green-500 hover:bg-green-600 text-white rounded-lg px-4 py-2 w-full"
+    >
+      Save Income
+    </button>
+  </form>
+
+  <form method="POST" class="bg-white p-6 rounded-lg shadow-md max-w-md w-full">
+    {% csrf_token %}
+    <h2 class="text-xl font-semibold text-gray-800 mb-4">Add Expense</h2>
+
+    <label for="expenseAmount" class="block text-gray-700 mb-1"
+      >Expense Amount:</label
+    >
+    <input
+      type="number"
+      id="expenseAmount"
+      name="expenseAmount"
+      class="w-full border border-green-500 rounded-lg p-2 mb-4"
+      required
+    />
+
+    <label for="expenseCategory" class="block text-gray-700 mb-1"
+      >Expense Category:</label
+    >
+    <input
+      type="text"
+      id="expenseCategory"
+      name="expenseCategory"
+      placeholder="e.g., Groceries, Utilities"
+      class="w-full border border-green-500 rounded-lg p-2 mb-4"
+      required
+    />
+
+    <label for="expenseDate" class="block text-gray-700 mb-1">Date:</label>
+    <input
+      type="date"
+      id="expenseDate"
+      name="expenseDate"
+      class="w-full border border-green-500 rounded-lg p-2 mb-4"
+      required
+    />
+
+    <label for="expenseTime" class="block text-gray-700 mb-1">Time:</label>
+    <input
+      type="time"
+      id="expenseTime"
+      name="expenseTime"
+      class="w-full border border-green-500 rounded-lg p-2 mb-4"
+      required
+    />
+
+    <button
+      type="submit"
+      name="submit_expense"
+      class="bg-blue-500 hover:bg-blue-600 text-white rounded-lg px-4 py-2 w-full mb-4"
+    >
+      Add Expense
+    </button>
+
+    <div id="expenseList" class="text-sm text-gray-700 mb-2"></div>
+  </form>
+</div>
+{% endblock %}

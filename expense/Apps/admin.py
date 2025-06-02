@@ -1,3 +1,5 @@
 from django.contrib import admin
+from .models import *
 
-# Register your models here.
+admin.site.register(MonthlyIncome)  # ✅ Pass the model class, not a string
+admin.site.register(Expense)

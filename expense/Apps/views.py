@@ -2,11 +2,88 @@ from django.shortcuts import render, redirect
 from django.contrib.auth.models import User
 from django.contrib import messages
 from django.contrib.auth import logout as auth_logout
-from django.contrib.auth.decorators import login_required
-from django.core.mail import send_mail
+from .models import *
+from datetime import date
+import calendar
+from django.db.models import Sum
+
 
 def home(request):
-    return render(request, 'pages/home.html')
+    today = date.today()
+    monthly_income = MonthlyIncome.objects.filter(month=today.month, year=today.year).first()
+    expenses = Expense.objects.filter(monthly_income=monthly_income) if monthly_income else []
+
+    # Monthly data for pie chart
+    monthly_data = Expense.objects.values('monthly_income__month').annotate(total=Sum('amount')).order_by('monthly_income__month')
+    month_labels = [calendar.month_abbr[item['monthly_income__month']] for item in monthly_data]
+    month_totals = [float(item['total']) for item in monthly_data]
+
+    # Daily data for bar chart
+    daily_data = Expense.objects.filter(monthly_income=monthly_income).values('date').annotate(total=Sum('amount')).order_by('date')
+    day_labels = [item['date'].strftime('%d %b') for item in daily_data]
+    day_totals = [float(item['total']) for item in daily_data]
+
+    return render(request, 'pages/home.html', {
+        'monthly_income': monthly_income,
+        'expenses': expenses,
+        'month_labels': month_labels,
+        'month_totals': month_totals,
+        'day_labels': day_labels,
+        'day_totals': day_totals
+    })
+
+def expense(request):
+    # When the form is submitted
+    if request.method == 'POST':
+        
+        # Check if the Monthly Income form was submitted
+        if 'monthlyIncome' in request.POST:
+            amount = request.POST.get('monthlyIncome')  # Get the income amount from the form
+            
+            # Get the current month and year
+            today = date.today()
+            month = today.month
+            year = today.year
+            
+            # Update the income if exists, or create a new record for the current month and year
+            MonthlyIncome.objects.update_or_create(
+                month=month, year=year,
+                defaults={'amount': amount}
+            )
+
+        # Check if the Expense form was submitted
+        elif 'expenseAmount' in request.POST:
+            amount = request.POST.get('expenseAmount')          # Get expense amount
+            category = request.POST.get('expenseCategory')      # Get expense category
+            exp_date = request.POST.get('expenseDate')          # Get expense date
+            exp_time = request.POST.get('expenseTime')          # Get expense time
+
+            # Find the current month's income record to link the expense to it
+            today = date.today()
+            income = MonthlyIncome.objects.filter(month=today.month, year=today.year).first()
+
+            # If there is a monthly income recorded, save the expense
+            if income:
+                Expense.objects.create(
+                    monthly_income=income,
+                    amount=amount,
+                    category=category,
+                    date=exp_date,
+                    time=exp_time
+                )
+
+    # For displaying data on the page:
+    today = date.today()
+    monthly_income = MonthlyIncome.objects.filter(month=today.month, year=today.year).first()
+    
+    # Get all expenses linked to this month's income
+    expenses = Expense.objects.filter(monthly_income=monthly_income) if monthly_income else []
+
+    # Pass data to the template
+    return render(request, 'pages/expense.html', {
+        'monthly_income': monthly_income,
+        'expenses': expenses
+    })
 
 def login(request):
     if request.method == 'POST':
@@ -55,15 +132,3 @@ def logout(request):
     return render(request, 'pages/home.html')
 
 from django.conf import settings  # Import settings to access EMAIL_HOST_USER
-
-# def forgetpass(request):
-#     if request.method == "POST":
-#         email = request.POST.get('email')
-#         print("Email : ", email)
-#         if User.objects.filter(email=email).exists():
-#             user = User.objects.filter(email=email)
-#             print(f"User : {user}")
-#             send_mail("Reset Your Password : ", f"Current User : {user}", settings.EMAIL_HOST_USER, [email], fail_silently=True)  # Use settings.EMAIL_HOST_USER
-#         return redirect('forgetpass')
-#     return render(request, 'auth/forgetpass.html')
-    

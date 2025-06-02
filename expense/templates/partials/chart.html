@@ -1,0 +1,45 @@
+<div class="md:w-1/2 w-full space-y-6">
+  <!-- Monthly Expense Pie Chart -->
+  <div class="bg-white p-4 rounded-lg shadow-md">
+    <h3 class="text-lg font-semibold mb-2">Monthly Expenses</h3>
+    <canvas id="monthlyPieChart" width="300" height="300"></canvas>
+  </div>
+
+  <!-- Daily Expense Bar Chart -->
+  <div class="bg-white p-4 rounded-lg shadow-md">
+    <h3 class="text-lg font-semibold mb-2">Daily Expenses</h3>
+    <canvas id="dailyBarChart" width="300" height="300"></canvas>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script>
+    // Example data, replace with your context data
+    const pieCtx = document.getElementById('monthlyPieChart');
+    new Chart(pieCtx, {
+      type: 'pie',
+      data: {
+        labels: {{ month_labels|safe }},
+        datasets: [{
+          label: 'Monthly Expense',
+          data: {{ month_totals|safe }},
+          backgroundColor: ['#F87171', '#34D399', '#60A5FA', '#FBBF24'],
+        }]
+      }
+    });
+
+    const barCtx = document.getElementById('dailyBarChart');
+    new Chart(barCtx, {
+      type: 'bar',
+      data: {
+        labels: {{ day_labels|safe }},
+        datasets: [{
+          label: 'Daily Expense',
+          data: {{ day_totals|safe }},
+          backgroundColor: '#60A5FA',
+        }]
+      }
+    });
+  </script>
+</div>
+
+  
