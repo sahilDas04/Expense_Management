@@ -1,70 +1,51 @@
 from django.shortcuts import render, redirect
 from django.contrib.auth.models import User
 from django.contrib import messages
-from django.contrib.auth import logout as auth_logout
+from django.contrib.auth import logout as auth_logout, authenticate, login as auth_login
 from .models import *
 from datetime import date
-import calendar
-from django.db.models import Sum
+from django.contrib.auth.decorators import login_required
 
-
+@login_required
 def home(request):
-    today = date.today()
-    monthly_income = MonthlyIncome.objects.filter(month=today.month, year=today.year).first()
-    expenses = Expense.objects.filter(monthly_income=monthly_income) if monthly_income else []
+    monthly_income = MonthlyIncome.objects.filter(user=request.user)
+    expenses = Expense.objects.filter(user=request.user)
+    context = {
+        'monthly_income' : monthly_income,
+        'expenses' : expenses
+    }
+    return render(request, 'pages/home.html', context)
 
-    # Monthly data for pie chart
-    monthly_data = Expense.objects.values('monthly_income__month').annotate(total=Sum('amount')).order_by('monthly_income__month')
-    month_labels = [calendar.month_abbr[item['monthly_income__month']] for item in monthly_data]
-    month_totals = [float(item['total']) for item in monthly_data]
-
-    # Daily data for bar chart
-    daily_data = Expense.objects.filter(monthly_income=monthly_income).values('date').annotate(total=Sum('amount')).order_by('date')
-    day_labels = [item['date'].strftime('%d %b') for item in daily_data]
-    day_totals = [float(item['total']) for item in daily_data]
-
-    return render(request, 'pages/home.html', {
-        'monthly_income': monthly_income,
-        'expenses': expenses,
-        'month_labels': month_labels,
-        'month_totals': month_totals,
-        'day_labels': day_labels,
-        'day_totals': day_totals
-    })
-
+@login_required
 def expense(request):
-    # When the form is submitted
     if request.method == 'POST':
         
-        # Check if the Monthly Income form was submitted
         if 'monthlyIncome' in request.POST:
-            amount = request.POST.get('monthlyIncome')  # Get the income amount from the form
+            amount = request.POST.get('monthlyIncome')
             
-            # Get the current month and year
             today = date.today()
             month = today.month
             year = today.year
             
-            # Update the income if exists, or create a new record for the current month and year
             MonthlyIncome.objects.update_or_create(
-                month=month, year=year,
+                user=request.user, 
+                month=month,
+                year=year,
                 defaults={'amount': amount}
             )
 
-        # Check if the Expense form was submitted
         elif 'expenseAmount' in request.POST:
-            amount = request.POST.get('expenseAmount')          # Get expense amount
-            category = request.POST.get('expenseCategory')      # Get expense category
-            exp_date = request.POST.get('expenseDate')          # Get expense date
-            exp_time = request.POST.get('expenseTime')          # Get expense time
+            amount = request.POST.get('expenseAmount')         
+            category = request.POST.get('expenseCategory')     
+            exp_date = request.POST.get('expenseDate')         
+            exp_time = request.POST.get('expenseTime')        
 
-            # Find the current month's income record to link the expense to it
             today = date.today()
-            income = MonthlyIncome.objects.filter(month=today.month, year=today.year).first()
+            income = MonthlyIncome.objects.filter(user=request.user, month=today.month, year=today.year).first()
 
-            # If there is a monthly income recorded, save the expense
             if income:
                 Expense.objects.create(
+                    user=request.user,
                     monthly_income=income,
                     amount=amount,
                     category=category,
@@ -72,14 +53,11 @@ def expense(request):
                     time=exp_time
                 )
 
-    # For displaying data on the page:
     today = date.today()
-    monthly_income = MonthlyIncome.objects.filter(month=today.month, year=today.year).first()
+    monthly_income = MonthlyIncome.objects.filter(user=request.user, month=today.month, year=today.year).first()
     
-    # Get all expenses linked to this month's income
     expenses = Expense.objects.filter(monthly_income=monthly_income) if monthly_income else []
 
-    # Pass data to the template
     return render(request, 'pages/expense.html', {
         'monthly_income': monthly_income,
         'expenses': expenses
@@ -90,17 +68,15 @@ def login(request):
         username = request.POST.get('username')
         password = request.POST.get('password')
         
-        try:
-            user = User.objects.get(username=username)
-            if user.check_password(password):
-                messages.success(request, 'Login successful')
-                return redirect('home')
-            else:
-                messages.error(request, 'Invalid password')
-        except User.DoesNotExist:
-            messages.error(request, 'User does not exist')
-        
-        return redirect('login')
+        user = authenticate(request, username=username, password=password)
+        if user is not None:
+            auth_login(request, user)
+            messages.success(request, 'Login successful')
+            return redirect('home')
+        else:
+            messages.error(request, 'Invalid username or password')
+            return redirect('login')
+    
     return render(request, 'auth/login.html')
 
 def register(request):
@@ -130,5 +106,3 @@ def logout(request):
         messages.success(request, 'Logged out successfully')
         return redirect('login')
     return render(request, 'pages/home.html')
-
-from django.conf import settings  # Import settings to access EMAIL_HOST_USER
